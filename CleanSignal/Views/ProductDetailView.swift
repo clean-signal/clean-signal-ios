@@ -2,7 +2,11 @@ import SwiftUI
 
 struct ProductDetailView: View {
     let product: Product
+    let structuredIngredients: [StructuredIngredient]
     let onDismiss: () -> Void
+
+    @State private var selectedIngredientId: String = ""
+    @State private var showIngredientSheet = false
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -32,8 +36,11 @@ struct ProductDetailView: View {
                 }
 
                 // Ingredients
-                if let ingredients = product.ingredientsText, !ingredients.isEmpty {
-                    ingredientsCard(ingredients)
+                if !structuredIngredients.isEmpty {
+                    ingredientsCard
+                        .padding(.horizontal, 20)
+                } else if let ingredients = product.ingredientsText, !ingredients.isEmpty {
+                    ingredientsTextCard(ingredients)
                         .padding(.horizontal, 20)
                 }
 
@@ -323,7 +330,81 @@ struct ProductDetailView: View {
 
     // MARK: - Ingredients
 
-    private func ingredientsCard(_ text: String) -> some View {
+    private var topLevelIngredients: [StructuredIngredient] {
+        structuredIngredients.filter { $0.depth == 0 }
+    }
+
+    private var ingredientsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Ingredients")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("\(topLevelIngredients.count)")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+
+            FlowLayout(spacing: 6) {
+                ForEach(topLevelIngredients) { ingredient in
+                    ingredientPill(ingredient)
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "1A1A1A"))
+        .cornerRadius(16)
+        .sheet(isPresented: $showIngredientSheet) {
+            IngredientDetailView(ingredientId: selectedIngredientId)
+        }
+    }
+
+    private func ingredientPill(_ ingredient: StructuredIngredient) -> some View {
+        let color = ingredientColor(ingredient)
+        return Button {
+            selectedIngredientId = ingredient.ingredientId
+            showIngredientSheet = true
+        } label: {
+            HStack(spacing: 4) {
+                if ingredient.type == "additive" {
+                    Circle().fill(color).frame(width: 5, height: 5)
+                }
+                Text(ingredient.name.localizedCapitalized)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.9))
+                if let pct = ingredient.percentEstimate, pct >= 1 {
+                    Text("\(Int(pct))%")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.4))
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(color.opacity(0.15))
+            .cornerRadius(8)
+        }
+    }
+
+    private func ingredientColor(_ ingredient: StructuredIngredient) -> Color {
+        if let tier = ingredient.riskTier {
+            switch tier {
+            case "red": return Color(hex: "E63E11")
+            case "caution": return Color(hex: "EE8100")
+            case "positive": return Color(hex: "1B8A2A")
+            default: break
+            }
+        }
+        switch ingredient.type {
+        case "additive": return .purple
+        case "vitamin": return .cyan
+        default: return .gray
+        }
+    }
+
+    private func ingredientsTextCard(_ text: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Ingredients")

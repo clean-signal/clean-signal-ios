@@ -15,6 +15,7 @@
 		A10000010000000000000006 /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000006 /* ProductDetailView.swift */; };
 		A10000010000000000000007 /* ScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000007 /* ScannerView.swift */; };
 		A10000010000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000008 /* Assets.xcassets */; };
+		A10000010000000000000009 /* IngredientDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000011 /* IngredientDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		A20000010000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000010000000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000010000000000000010 /* CleanSignal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CleanSignal.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000010000000000000011 /* IngredientDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000010000000000000005 /* BarcodeScannerView.swift */,
+				A20000010000000000000011 /* IngredientDetailView.swift */,
 				A20000010000000000000006 /* ProductDetailView.swift */,
 				A20000010000000000000007 /* ScannerView.swift */,
 			);
@@ -173,6 +176,7 @@
 				A10000010000000000000005 /* BarcodeScannerView.swift in Sources */,
 				A10000010000000000000006 /* ProductDetailView.swift in Sources */,
 				A10000010000000000000007 /* ScannerView.swift in Sources */,
+				A10000010000000000000009 /* IngredientDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,9 +1,83 @@
 import Foundation
 
+struct StructuredIngredient: Codable, Identifiable {
+    let ingredientId: String
+    let name: String
+    let type: String
+    let riskTier: String?
+    let percentEstimate: Double?
+    let position: Int
+    let depth: Int
+    let parentId: String?
+
+    var id: String { "\(ingredientId)-\(position)" }
+
+    enum CodingKeys: String, CodingKey {
+        case ingredientId = "id"
+        case name
+        case type
+        case riskTier = "risk_tier"
+        case percentEstimate = "percent_estimate"
+        case position
+        case depth
+        case parentId = "parent_id"
+    }
+}
+
+struct IngredientDetail: Codable {
+    let id: String
+    let name: String
+    let type: String
+    let riskTier: String?
+    let riskReason: String?
+    let vegan: String?
+    let vegetarian: String?
+    let description: String?
+    let productCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, type, vegan, vegetarian, description
+        case riskTier = "risk_tier"
+        case riskReason = "risk_reason"
+        case productCount = "product_count"
+    }
+}
+
+struct IngredientResponse: Codable {
+    let ingredient: IngredientDetail?
+    let products: [IngredientProduct]?
+    let error: String?
+}
+
+struct IngredientProduct: Codable, Identifiable {
+    var id: String { barcode }
+    let barcode: String
+    let productName: String?
+    let brand: String?
+    let cleanScore: Int?
+    let imageSmallUrl: String?
+
+    enum CodingKeys: String, CodingKey {
+        case barcode
+        case productName = "product_name"
+        case brand
+        case cleanScore = "clean_score"
+        case imageSmallUrl = "image_small_url"
+    }
+}
+
 struct ProductResponse: Codable {
     let source: String?
     let product: Product?
+    let structuredIngredients: [StructuredIngredient]?
     let error: String?
+
+    enum CodingKeys: String, CodingKey {
+        case source
+        case product
+        case structuredIngredients = "structured_ingredients"
+        case error
+    }
 }
 
 struct ScoreBreakdown: Codable, Identifiable {

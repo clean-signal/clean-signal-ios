@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ScannerView: View {
     @State private var scannedProduct: Product?
+    @State private var structuredIngredients: [StructuredIngredient] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var lastScannedBarcode: String?
@@ -76,9 +77,10 @@ struct ScannerView: View {
     }
 
     private var productView: some View {
-        ProductDetailView(product: scannedProduct!) {
+        ProductDetailView(product: scannedProduct!, structuredIngredients: structuredIngredients) {
             withAnimation(.easeInOut(duration: 0.2)) {
                 scannedProduct = nil
+                structuredIngredients = []
                 lastScannedBarcode = nil
                 errorMessage = nil
             }
@@ -93,10 +95,11 @@ struct ScannerView: View {
 
         Task {
             do {
-                let product = try await APIService.lookupBarcode(barcode)
+                let result = try await APIService.lookupBarcode(barcode)
                 await MainActor.run {
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        scannedProduct = product
+                        scannedProduct = result.product
+                        structuredIngredients = result.structuredIngredients
                         isLoading = false
                     }
                 }
