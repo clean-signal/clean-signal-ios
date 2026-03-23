@@ -5,8 +5,7 @@ struct ProductDetailView: View {
     let structuredIngredients: [StructuredIngredient]
     let onDismiss: () -> Void
 
-    @State private var selectedIngredientId: String = ""
-    @State private var showIngredientSheet = false
+    @State private var selectedIngredientId: IngredientSheetItem?
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -54,6 +53,9 @@ struct ProductDetailView: View {
             }
         }
         .background(Color(hex: "0D0D0D"))
+        .sheet(item: $selectedIngredientId) { item in
+            IngredientDetailView(ingredientId: item.id)
+        }
     }
 
     // MARK: - Header
@@ -311,14 +313,23 @@ struct ProductDetailView: View {
             }
 
             ForEach(additives) { additive in
-                HStack(spacing: 8) {
-                    Text(additive.additiveId)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.purple)
-                    Text(additive.name)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
+                Button {
+                    let eNumber = additive.additiveId.lowercased()
+                    selectedIngredientId = IngredientSheetItem(id: "en:\(eNumber)")
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(additive.additiveId)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.purple)
+                        Text(additive.name)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                    }
                 }
             }
         }
@@ -330,8 +341,16 @@ struct ProductDetailView: View {
 
     // MARK: - Ingredients
 
-    private var topLevelIngredients: [StructuredIngredient] {
-        structuredIngredients.filter { $0.depth == 0 }
+    /// Ingredients that have no children — the actual substances, not category wrappers
+    private var leafIngredients: [StructuredIngredient] {
+        let parentIds = Set(structuredIngredients.compactMap { $0.parentId })
+        return structuredIngredients.filter { !parentIds.contains($0.ingredientId) }
+    }
+
+    /// Look up a parent's display name for context label
+    private func parentName(for ingredient: StructuredIngredient) -> String? {
+        guard let pid = ingredient.parentId else { return nil }
+        return structuredIngredients.first { $0.ingredientId == pid }?.displayName
     }
 
     private var ingredientsCard: some View {
@@ -341,14 +360,14 @@ struct ProductDetailView: View {
                     .font(.caption)
                     .foregroundColor(.gray)
                 Spacer()
-                Text("\(topLevelIngredients.count)")
+                Text("\(leafIngredients.count)")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(.white.opacity(0.5))
             }
 
             FlowLayout(spacing: 6) {
-                ForEach(topLevelIngredients) { ingredient in
+                ForEach(leafIngredients) { ingredient in
                     ingredientPill(ingredient)
                 }
             }
@@ -357,24 +376,26 @@ struct ProductDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(hex: "1A1A1A"))
         .cornerRadius(16)
-        .sheet(isPresented: $showIngredientSheet) {
-            IngredientDetailView(ingredientId: selectedIngredientId)
-        }
     }
 
     private func ingredientPill(_ ingredient: StructuredIngredient) -> some View {
         let color = ingredientColor(ingredient)
+        let context = parentName(for: ingredient)
         return Button {
-            selectedIngredientId = ingredient.ingredientId
-            showIngredientSheet = true
+            selectedIngredientId = IngredientSheetItem(id: ingredient.ingredientId)
         } label: {
             HStack(spacing: 4) {
                 if ingredient.type == "additive" {
                     Circle().fill(color).frame(width: 5, height: 5)
                 }
-                Text(ingredient.name.localizedCapitalized)
+                Text(ingredient.displayName.localizedCapitalized)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.9))
+                if let context {
+                    Text("(\(context))")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.35))
+                }
                 if let pct = ingredient.percentEstimate, pct >= 1 {
                     Text("\(Int(pct))%")
                         .font(.caption2)

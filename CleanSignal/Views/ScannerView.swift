@@ -6,6 +6,8 @@ struct ScannerView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var lastScannedBarcode: String?
+    @State private var manualBarcode = ""
+    @FocusState private var isManualEntryFocused: Bool
 
     var body: some View {
         ZStack {
@@ -45,7 +47,7 @@ struct ScannerView: View {
                 Spacer()
 
                 // Bottom info
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     if isLoading {
                         ProgressView()
                             .tint(.white)
@@ -69,8 +71,34 @@ struct ScannerView: View {
                             .font(.subheadline)
                             .foregroundColor(.gray)
                     }
+
+                    // Manual entry
+                    HStack(spacing: 8) {
+                        TextField("Enter barcode", text: $manualBarcode)
+                            .keyboardType(.numberPad)
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(10)
+                            .focused($isManualEntryFocused)
+
+                        Button {
+                            submitManualBarcode()
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                                .font(.body)
+                                .foregroundColor(.black)
+                                .frame(width: 40, height: 40)
+                                .background(Color.white)
+                                .cornerRadius(10)
+                        }
+                        .disabled(manualBarcode.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
+                        .opacity(manualBarcode.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+                    }
+                    .padding(.horizontal, 40)
                 }
-                .frame(height: 80)
                 .padding(.bottom, 40)
             }
         }
@@ -85,6 +113,14 @@ struct ScannerView: View {
                 errorMessage = nil
             }
         }
+    }
+
+    private func submitManualBarcode() {
+        let barcode = manualBarcode.trimmingCharacters(in: .whitespaces)
+        guard !barcode.isEmpty else { return }
+        isManualEntryFocused = false
+        manualBarcode = ""
+        handleScan(barcode)
     }
 
     private func handleScan(_ barcode: String) {

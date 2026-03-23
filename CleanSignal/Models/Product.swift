@@ -1,5 +1,9 @@
 import Foundation
 
+struct IngredientSheetItem: Identifiable {
+    let id: String
+}
+
 struct StructuredIngredient: Codable, Identifiable {
     let ingredientId: String
     let name: String
@@ -11,6 +15,12 @@ struct StructuredIngredient: Codable, Identifiable {
     let parentId: String?
 
     var id: String { "\(ingredientId)-\(position)" }
+
+    var displayName: String {
+        ingredientId
+            .replacingOccurrences(of: "en:", with: "")
+            .replacingOccurrences(of: "-", with: " ")
+    }
 
     enum CodingKeys: String, CodingKey {
         case ingredientId = "id"

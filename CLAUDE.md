@@ -21,21 +21,24 @@ CleanSignal/
 ├── Info.plist                  # Camera permission, local networking
 ├── Assets.xcassets/
 ├── Models/
-│   └── Product.swift           # Product, Additive, ScoreBreakdown models
+│   └── Product.swift           # Product, Additive, ScoreBreakdown, StructuredIngredient, IngredientDetail models
 ├── Services/
-│   ├── APIService.swift        # Edge Function API calls
+│   ├── APIService.swift        # Edge Function API calls (lookup-barcode, lookup-ingredient)
 │   └── BarcodeScannerDelegate.swift  # AVCaptureMetadataOutput delegate
 └── Views/
-    ├── ScannerView.swift       # Main view — camera + loading + error states
+    ├── ScannerView.swift       # Main view — camera + manual entry + loading + error states
     ├── BarcodeScannerView.swift # UIViewControllerRepresentable wrapping AVFoundation
-    └── ProductDetailView.swift  # Product detail — score, concerns, macros, allergens, etc.
+    ├── ProductDetailView.swift  # Product detail — score, concerns, macros, allergens, ingredients, etc.
+    └── IngredientDetailView.swift # Ingredient detail page — risk tier, description, products containing it
 ```
 
 ## Backend
 
-The app calls a Supabase Edge Function — no direct DB access from the client.
+The app calls Supabase Edge Functions — no direct DB access from the client.
 
-**Production endpoint**: `https://zijbiydtfezbbgyikcgc.supabase.co/functions/v1/lookup-barcode`
+**Endpoints**:
+- `POST /functions/v1/lookup-barcode` — `{ "barcode": "..." }` → product + structured_ingredients
+- `POST /functions/v1/lookup-ingredient` — `{ "ingredient_id": "en:..." }` → ingredient detail + products containing it
 **Method**: POST
 **Body**: `{ "barcode": "50457250" }`
 **Response**: `{ "source": "cache"|"api", "product": {...} }` or `{ "error": "..." }`
@@ -71,15 +74,24 @@ open CleanSignal.xcodeproj
 2. **Concerns**: Only factors that lost points (not estimated). Shows verdict + points lost. If any factors have missing data, shows "Some nutritional data unavailable" note
 3. **Macros card**: Primary (cal, protein, carbs, fat) + secondary row (sat fat, sugars, salt, fiber)
 4. **Allergens**: Red pills for allergens, orange for traces ("May contain")
-5. **Additives**: Each with E-number ID + human-readable name, count in header
-6. **Ingredients**: Full text, count in header
+5. **Additives**: Each with E-number ID + human-readable name, count in header. Tappable — opens ingredient detail page
+6. **Ingredients**: Tappable color-coded pills (all depths flattened). Shows name + percent estimate. Color by type: purple (additive), cyan (vitamin), grey (ingredient). Risk tier overrides color: red/orange/green. Count in header
 7. **Analysis**: Vegan/vegetarian status pills, ecoscore badge
+8. **Ingredient Detail Page** (sheet): Name, type badge, risk tier, description, vegan/vegetarian status, list of products containing it. Loaded via `lookup-ingredient` edge function
+
+### Ingredient display design decisions
+
+- **All depths shown as flat pills** — sub-ingredients (depth 1+) are shown alongside top-level ingredients. The hierarchy (e.g. "thickener (guar gum, xanthan gum)") is a labelling convention, not useful to users. The actual additives/chemicals are almost always nested, so hiding them would hide the most important information.
+- **Manual barcode entry** — text field with number pad at bottom of scanner view, for entering barcodes without camera.
 
 ## Key Data Models
 
 - `Product` — all fields from the Edge Function response, all optional except barcode
 - `Additive` — `{id: "E412", name: "Guar gum"}`
 - `ScoreBreakdown` — `{factor, points, maxPoints, verdict, estimated}`
+- `StructuredIngredient` — `{id, name, type, riskTier, percentEstimate, position, depth, parentId}` from `structured_ingredients` API response
+- `IngredientDetail` — full ingredient record from `lookup-ingredient` endpoint
+- `IngredientProduct` — product summary shown on ingredient detail page
 
 The `estimated` flag on ScoreBreakdown indicates missing data that was given full points (benefit of the doubt). The UI filters these from the concerns list and shows a note instead.
 
