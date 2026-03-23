@@ -351,7 +351,10 @@ struct ProductDetailView: View {
     // MARK: - Analysis
 
     private var hasAnalysisData: Bool {
-        product.veganStatus != nil || product.vegetarianStatus != nil || product.ecoscoreGrade != nil
+        let hasVegan = product.veganStatus != nil && product.veganStatus != "unknown"
+        let hasVeg = product.vegetarianStatus != nil && product.vegetarianStatus != "unknown"
+        let hasEco = product.ecoscoreGrade != nil && product.ecoscoreGrade?.lowercased() != "unknown" && product.ecoscoreGrade?.lowercased() != "not-applicable"
+        return hasVegan || hasVeg || hasEco
     }
 
     private var analysisCard: some View {
@@ -361,13 +364,13 @@ struct ProductDetailView: View {
                 .foregroundColor(.gray)
 
             FlowLayout(spacing: 8) {
-                if let vegan = product.veganStatus {
+                if let vegan = product.veganStatus, vegan != "unknown" {
                     statusPill("Vegan", value: vegan)
                 }
-                if let vegetarian = product.vegetarianStatus {
+                if let vegetarian = product.vegetarianStatus, vegetarian != "unknown" {
                     statusPill("Vegetarian", value: vegetarian)
                 }
-                if let eco = product.ecoscoreGrade?.lowercased(), !eco.isEmpty {
+                if let eco = product.ecoscoreGrade?.lowercased(), !eco.isEmpty, eco != "unknown", eco != "not-applicable" {
                     ecoPill(eco)
                 }
             }
